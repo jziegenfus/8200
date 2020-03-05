@@ -1,0 +1,170 @@
+---
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+## Clear environment
+
+```{r}
+rm(list=ls())
+```
+
+```{r}
+library(tidyverse)
+library(stats)
+library(flexclust)
+library(plotly)
+library(ggplot2)
+library(LICORS)
+library(knitr)
+library(modelr)
+```
+
+
+##1. 
+Load Data
+
+
+```{r}
+atus.cps <- read.delim('atuscps_2018.dat', sep=",")
+atus.sum <- read.delim('atussum_2018.dat', sep=",")
+
+atus.all <- merge(atus.cps, atus.sum, by="TUCASEID")
+
+```
+
+```{r}
+mean(atus.all$t120303,na.rm = TRUE)
+
+```
+
+```{r}
+atus.all<-atus.all%>%mutate(avgTV=mean(t120303,na.rm=TRUE))
+atus.all<-atus.all%>%mutate(avgTV=mean(t120303,na.rm=TRUE))
+
+```
+
+
+TV by income
+
+```{r}
+tvbyinc<-ggplot(data=atus.all, aes(x=HEFAMINC,
+                         y=avgTV))
+
+#Now I need to declare the type of graphic, or geometry. By specifiying `geom_point` I'm saying I want a scatterplot.
+
+tvbyinc<-tvbyinc+geom_point(alpha=.5,size=.5)
+
+#Now I'm going to add labels for the x and y axis. 
+
+tvbyinc<-tvbyinc+xlab("Household Income, 2018")+ylab("Minutes of TV Per Week, 2018")
+
+#And now we're ready to print the graphics object, tvbyinc
+
+tvbyinc
+```
+
+```{r}
+# Make Interactive plot
+tvbyincinteract<-ggplotly(tvbyinc)
+
+tvbyincinteract
+```
+
+
+##TV by Retirement Status
+```{r}
+tvbyretire<-ggplot(data=atus.all, aes(x=PENLFRET,
+                         y=t120303))
+
+#Now I need to declare the type of graphic, or geometry. By specifiying `geom_point` I'm saying I want a scatterplot.
+
+tvbyretire<-tvbyretire+geom_point(alpha=.5,size=.5)
+
+#Now I'm going to add labels for the x and y axis. 
+
+tvbyretire<-tvbyretire+xlab("Retirement Status")+ylab("Minutes of TV Per Week")
+
+#And now we're ready to print the graphics object, tvbyretire
+
+tvbyretire
+```
+
+
+##TV by Marital Status
+```{r}
+tvbymarstatus<-ggplot(data=atus.all, aes(x=PEMARITL,y=avgTV, fill=factor(PEMARITL)))
+
+#Now I need to declare the type of graphic, or geometry. By specifiying `geom_point` I'm saying I want a bar chart.
+
+tvbymarstatus<-tvbymarstatus+geom_bar(stat="identity")
+
+#Now I'm going to add labels for the x and y axis. 
+
+tvbymarstatus<-tvbymarstatus+xlab("Marital Status")+ylab("Minutes of TV Per Week")
+
+#And now we're ready to print the graphics object, tvbymarstatus
+
+tvbymarstatus
+```
+
+##TV by Number of Children
+```{r}
+tvbykids<-ggplot(data=atus.all, aes(x=PRNMCHLD,y=t120303, fill=factor(PRNMCHLD)))
+
+#Now I need to declare the type of graphic, or geometry. By specifiying `geom_point` I'm saying I want a bar chart.
+
+tvbykids<-tvbykids+geom_point(alpha=.5,size=.5)
+
+#Now I'm going to add labels for the x and y axis. 
+
+tvbykids<-tvbykids+xlab("Number of Children")+ylab("Minutes of TV Per Week")
+
+#And now we're ready to print the graphics object, tvbykids
+
+tvbykids
+```
+
+##TV by Employment Status
+```{r}
+tvbyemp<-ggplot(data=atus.all, aes(x=TRDPFTPT,y=avgTV, fill=factor(TRDPFTPT)))
+
+#Now I need to declare the type of graphic, or geometry. By specifiying `geom_point` I'm saying I want a bar chart.
+
+tvbyemp<-tvbyemp+geom_bar(stat="identity")
+
+#Now I'm going to add labels for the x and y axis. 
+
+tvbyemp<-tvbyemp+xlab("Emplyment Status")+ylab("Minutes of TV Per Week")
+
+#And now we're ready to print the graphics object, tvbyemp
+
+tvbyemp
+```
+
+##Regression Analysis
+
+```{r}
+TVreganalysis<-lm(t120303~
+                  TRDPFTPT+
+                  PRNMCHLD+
+                  PEMARITL+
+                  PENLFRET+
+                  HEFAMINC,
+          data=atus.all)
+
+summary(TVreganalysis)
+```
+
+
+```{r}
+# Test to see how many clusters are needed
+c_test <- stepFlexclust(atus.all, k = 2:7, nrep = 20)
+
+c_test
+
+plot(c_test)
+```
+
+
